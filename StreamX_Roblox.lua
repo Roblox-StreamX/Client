@@ -11,6 +11,11 @@ Once you're done with that, change the settings below to your liking.
 
 Contact Crcoli737 on the DevForum if you have any questions!
 
+
+By the way, there's no harm in the printing, with the server identifier etc.
+
+This is printed in the server output, nobody but devs can see it.
+
 ]]
 
 local HttpService = game:GetService("HttpService")
@@ -48,9 +53,14 @@ end)
 
 local i = 0
 local partdata = {}
+local Total = 0
+
+for __, v in ipairs(workspace.ASSETS:GetDescendants() do
+    Total += 1
+end
 for _, part in pairs(game.Workspace.ASSETS:GetDescendants()) do 
 	if i > 1000 then
-		print("Sending Part Data Request... ("..total..") complete")
+		print("Sending Part Data Request... ("..total.."/"..Total.." parts complete)")
 		HttpService:PostAsync(url.."/upload/part-info/"..key.."/"..identifier, HttpService:JSONEncode(partdata))
 		partdata = {}
 		i = 0
