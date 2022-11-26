@@ -51,6 +51,13 @@ game:BindToClose(function()
 	HttpService:GetAsync(url.."/delete/part-info/"..key.."/"..identifier)
 end)
 
+game.Players.PlayerRemoving:Connect(function()
+	local players = game.Players:GetChildren()
+	if #players == 1 then
+		HttpService:GetAsync(url.."/delete/part-info/"..key.."/"..identifier)
+	end
+end)
+
 local i = 0
 local partdata = {}
 local Total = 0
