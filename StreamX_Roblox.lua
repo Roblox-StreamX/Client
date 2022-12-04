@@ -1,6 +1,6 @@
 --[[
 
-StreamX Luau v0.2.2 (Beta Release)
+StreamX Luau v0.2.3 (Public Beta)
 
 How to use:
 
