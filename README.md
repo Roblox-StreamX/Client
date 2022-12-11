@@ -1,2 +1,3 @@
 # StreamX Client
-You can learn more about the StreamX Client and how to use it [here](https://www.youtube.com/watch?v=ENRlTXDtxGg).
+
+In order to use the StreamX Client for v3.0.0, you must put the three script in this repository into the game's ServerScriptService, the Serializer script and BitBuffer script should be chidren of the StreamX script. Configure your StreamX installation in the StreamX script.
