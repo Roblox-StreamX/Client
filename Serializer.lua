@@ -10,7 +10,7 @@
 --	 https://raw.githubusercontent.com/howmanysmall/FastBitBuffer/master/src/init.lua
 
 -- Initialization
-local BitBuffer = require(script.Parent.BitBuffer)
+local BitBuffer = require(script.Parent:FindFirstChild("BitBuffer") or 11809378734)
 local SerialMap = {
 	["Anchored"] = "Bool",
 	["CanCollide"] = "Bool",
@@ -160,16 +160,18 @@ local function serialize(p)
 	end
 	return Serial.serializeV3ForTransport(p.Position) .. ":" .. bb:ToBase64()
 end
-local function deserialize(p, f, crt)
+local function deserialize(p, f, rc, pts)
 	local bb = BitBuffer.FromBase64(p)
 	local pt = Instance.new(bb:ReadString())
 	for _, v in ipairs(SerialOrder) do
 		pt[v] = Serial["deserialize" .. SerialMap[v]](bb)
 	end
-	for p, c in pairs(crt) do
-		if c.CFrame == pt.CFrame then
-			table.remove(crt, p)
-			return c
+	if rc then
+		for p, c in pairs(pts) do
+			if c.CFrame == pt.CFrame then
+				table.remove(pts, p)
+				return c
+			end
 		end
 	end
 	for n, a in pairs(SerialMapSpecs) do
