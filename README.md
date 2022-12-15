@@ -2,10 +2,7 @@
 The Roblox handler to connect and use all StreamX resources.
 ---
 ### Setup instructions
-If you want a stable release, copy `StreamX.lua` to `ServerScriptStorage` and fill out the configuration.  This will give you a fully stable StreamX game; however, if you want the latest object support (or just newer code), you can copy `BitBuffer.lua` and `Serializer.lua` while placing them like so:  
-├── StreamX (Script)  
-│		├── BitBuffer (ModuleScript)  
-│		├── Serializer (ModuleScript)  
+If you want a stable release, copy `StreamX.lua` to `ServerScriptStorage` and fill out the configuration.  This will give you a fully stable StreamX game, all other required modules update automatically.
 
 This will force the StreamX client to load the local modules and therefore give you more recent updates.
 
