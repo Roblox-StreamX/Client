@@ -4,8 +4,6 @@ The Roblox handler to connect and use all StreamX resources.
 ### Setup instructions
 If you want a stable release, copy `StreamX.lua` to `ServerScriptStorage` and fill out the configuration.  This will give you a fully stable StreamX game, all other required modules update automatically.
 
-This will force the StreamX client to load the local modules and therefore give you more recent updates.
-
 ### Contributions
 
 While the backend is proprietary, this client is very much open-source and open for contributions.  
