@@ -163,7 +163,7 @@ if Folder == nil then
 end
 
 -- Begin uploading data
-if NeedsUpload or true then
+if NeedsUpload then
 	log("Server requested upload, performing action!")
 	local sp, t0 = {}, time()
 	for _, p in pairs(Folder:GetDescendants()) do
