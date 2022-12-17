@@ -31,6 +31,9 @@ local SerialMapSpecs = {
 	["MeshPart"] = {
 		["MeshId"] = "String",
 		["TextureID"] = "String"
+	},
+	["UnionOperation"] = {
+		["AssetId"] = "String"
 	}
 }
 
