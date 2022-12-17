@@ -170,7 +170,7 @@ if NeedsUpload then
 	log("Server requested upload, performing action!")
 	local sp, t0 = {}, time()
 	for _, p in pairs(Folder:GetDescendants()) do
-		if p:IsA("MeshPart") or p:IsA("Part") or p:IsA("BasePart") then
+		if p:IsA("MeshPart") or p:IsA("Part") or p:IsA("BasePart") or p:IsA("UnionOperation") then
 			table.insert(sp, Serial.serialize(p))
 			if #sp == C.ChunkAmount then
 				UploadParts(sp)
