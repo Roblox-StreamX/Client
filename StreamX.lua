@@ -229,3 +229,5 @@ while task.wait() do  -- task.wait() because it looks cleaner then true lol
 	end
 	task.wait(C.UpdateDelay)
 end
+
+-- That's all folks!
