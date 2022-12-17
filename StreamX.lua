@@ -122,8 +122,11 @@ local function MakeRequest(endpoint, data)
 	return { Success = s, Data = HTTP:JSONDecode(d) }
 end
 local function DeInitialize()
-	warn_("Deinitializing StreamX")
-	-- This doesn't do anything yet
+	players = game:GetService("Players"):GetChildren()
+	if #players < 1 then
+		warn_("Deinitializing StreamX")
+		-- This doesn't do anything yet
+	end
 end
 
 game:BindToClose(DeInitialize)
