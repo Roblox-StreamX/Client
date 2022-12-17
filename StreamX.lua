@@ -135,7 +135,7 @@ game.Players.PlayerRemoving:Connect(function(p)
 end)
 
 log("Initializing connection to StreamX ...")
-local InitReq = MakeRequest("init", { gameid = game.GameId, placever = game.PlaceVersion })
+local InitReq = MakeRequest("init", { gameid = game.PlaceId, placever = game.PlaceVersion })
 local AuthKey, NeedsUpload = InitReq.Data.key, InitReq.Data.upload
 
 log("Authentication key is " .. AuthKey)
