@@ -214,21 +214,25 @@ end
 local ds = if C.Backlog.Enabled then dsBL else dsNoBL
 
 -- Start streaming
+local prv = {}
 while task.wait() do  -- task.wait() because it looks cleaner then true lol
 	for _, plr in pairs(game.Players:GetPlayers()) do
 		if PlayerParts[plr.UserId] == nil then PlayerParts[plr.UserId] = {} end
 		local head = plr.Character:WaitForChild("Head", .1)  -- DO NOT wait for one players head, just keep going
-		local data = DownloadParts({
-			["HeadPosition"] = string.split(Serial.serializeV3ForTransport(head.Position), ":"),
-			["StudDifference"] = C.Throttle * 10
-		})
-		if data == "!" then
+		if not prv[plr.Name] or prv[plr.Name] ~= head.Position then
+			prv[plr.Name] = head.Position
+			local data = DownloadParts({
+				["HeadPosition"] = string.split(Serial.serializeV3ForTransport(head.Position), ":"),
+				["StudDifference"] = C.Throttle * 10
+			})
+			if data == "!" then
+				for _, p in pairs(PlayerParts[plr.UserId]) do p:Destroy() end
+				continue
+			end
+			local n = ds(plr, data)
 			for _, p in pairs(PlayerParts[plr.UserId]) do p:Destroy() end
-			continue
+			PlayerParts[plr.UserId] = n
 		end
-		local n = ds(plr, data)
-		for _, p in pairs(PlayerParts[plr.UserId]) do p:Destroy() end
-		PlayerParts[plr.UserId] = n
 	end
 	task.wait(C.UpdateDelay)
 end
