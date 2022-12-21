@@ -219,7 +219,7 @@ while task.wait() do  -- task.wait() because it looks cleaner then true lol
 	for _, plr in pairs(game.Players:GetPlayers()) do
 		if PlayerParts[plr.UserId] == nil then PlayerParts[plr.UserId] = {} end
 		local head = plr.Character:WaitForChild("Head", .1)  -- DO NOT wait for one players head, just keep going
-		if prv[plr.Name] or prv[plr.Name] ~= head.Position then
+		if (not prv[plr.Name]) or (prv[plr.Name] ~= head.Position) then
 			prv[plr.Name] = head.Position
 			local data = DownloadParts({
 				["HeadPosition"] = string.split(Serial.serializeV3ForTransport(head.Position), ":"),
