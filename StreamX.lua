@@ -40,8 +40,7 @@ local Configuration = {
 			"https://streamx-fallback.quantumpython.xyz"  -- Fallback Datacenter
 		}
 	},
-	Throttle			= 10,		-- % Streaming Throttle (x10 stud diff.)
-	UpdateDelay		= 6,			-- Second delay between updates (keep above 5)
+	Throttle		= 10,		-- % Streaming Throttle (x10 stud diff.)
 	EnableReuseComp	= true,		-- Enables duplicate computation (can normalize lag, at the cost of frequent spikes)
 	ChunkAmount		= 1000,		-- Amount of parts sent in each upload request
 	APIKey			= "",		-- StreamX API key
