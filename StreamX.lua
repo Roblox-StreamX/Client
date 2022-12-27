@@ -63,6 +63,7 @@ local Configuration = {
 local C = Configuration
 
 -- Services
+local RunService = game.GetService("RunService")
 local HTTP = game:GetService("HttpService")
 local Serial = require(script:FindFirstChild("Serializer") or 11708986356)
 
@@ -213,7 +214,7 @@ local ds = if C.Backlog.Enabled then dsBL else dsNoBL
 
 -- Start streaming
 local prv = {}
-while task.wait() do  -- task.wait() because it looks cleaner then true lol
+local function updateParts()
 	for _, plr in pairs(game.Players:GetPlayers()) do
 		if PlayerParts[plr.UserId] == nil then PlayerParts[plr.UserId] = {} end
 		local head = plr.Character:WaitForChild("Head", .1)  -- DO NOT wait for one players head, just keep going
@@ -234,5 +235,7 @@ while task.wait() do  -- task.wait() because it looks cleaner then true lol
 	end
 	task.wait(C.UpdateDelay)
 end
+
+RunService.RenderStepped:Connect(updateParts)
 
 -- That's all folks!
