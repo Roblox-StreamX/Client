@@ -34,12 +34,10 @@
 local Configuration = {
 	StreamingURLs = {
 		["Primary"] = {
-			"https://streamx-lb1.quantumpython.xyz",		-- iiPythonx (MS)
-			"https://streamx-lb2.quantumpython.xyz",		-- Crcoli737 (WV)
+			"https://streamx.quantumpython.xyz"		      -- High Availability Datacenter
 		},
 		["Backup"] = {
-			"https://streamx.iipython.cf",				-- iiPythonx (MS)
-			"https://del3.quantumpython.xyz"				-- DarkPixlz (FL)
+			"https://streamx-fallback.quantumpython.xyz"  -- Fallback Datacenter
 		}
 	},
 	Throttle			= 10,		-- % Streaming Throttle (x10 stud diff.)
