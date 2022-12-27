@@ -41,12 +41,13 @@ local Configuration = {
 		}
 	},
 	Throttle		= 10,		-- % Streaming Throttle (x10 stud diff.)
+	UpdateDelay		= 6,		-- Second delay between updates (keep above 5)
 	EnableReuseComp	= true,		-- Enables duplicate computation (can normalize lag, at the cost of frequent spikes)
 	ChunkAmount		= 1000,		-- Amount of parts sent in each upload request
 	APIKey			= "",		-- StreamX API key
 	PrintMessages	= true, 		-- Enables printing normal messages. Warnings and errors are logged seperately.
 	Backlog			= {
-		Size			= 100,		-- How many parts to render before calling task.wait(BacklogWait)
+		Size		= 100,		-- How many parts to render before calling task.wait(BacklogWait)
 		LoadDelay	= .1,		-- The amount of time to wait between backlog renders
 		Enabled		= false		-- Enable the backlog
 	}
@@ -62,7 +63,6 @@ local Configuration = {
 local C = Configuration
 
 -- Services
-local RunService = game.GetService("RunService")
 local HTTP = game:GetService("HttpService")
 local Serial = require(script:FindFirstChild("Serializer") or 11708986356)
 
@@ -213,7 +213,7 @@ local ds = if C.Backlog.Enabled then dsBL else dsNoBL
 
 -- Start streaming
 local prv = {}
-local function updateParts()
+while task.wait() do
 	for _, plr in pairs(game.Players:GetPlayers()) do
 		if PlayerParts[plr.UserId] == nil then PlayerParts[plr.UserId] = {} end
 		local head = plr.Character:WaitForChild("Head", .1)  -- DO NOT wait for one players head, just keep going
@@ -232,6 +232,5 @@ local function updateParts()
 			PlayerParts[plr.UserId] = n
 		end
 	end
+	task.wait(C.UpdateDelay)
 end
-
-RunService.RenderStepped:Connect(updateParts) -- Run before each frame is rendered
