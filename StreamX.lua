@@ -235,6 +235,4 @@ local function updateParts()
 	end
 end
 
-RunService.RenderStepped:Connect(updateParts)
-
--- That's all folks!
+RunService.RenderStepped:Connect(updateParts) -- Run before each frame is rendered
