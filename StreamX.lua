@@ -233,7 +233,6 @@ local function updateParts()
 			PlayerParts[plr.UserId] = n
 		end
 	end
-	task.wait(C.UpdateDelay)
 end
 
 RunService.RenderStepped:Connect(updateParts)
