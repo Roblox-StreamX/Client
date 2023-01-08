@@ -26,7 +26,6 @@ local SerialMap = {
 	["Reflectance"] = "Number",
 	["Size"] = "Vector3",
 	["Transparency"] = "Number"
-},
 }
 
 function genSerialMap(m)
