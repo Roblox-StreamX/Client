@@ -46,7 +46,7 @@ local Configuration = {
 	ChunkAmount		= 1000,		-- Amount of parts sent in each upload request
 	APIKey			= "",		-- StreamX API key
 	PrintMessages	= true, 		-- Enables printing normal messages. Warnings and errors are logged seperately.
-	Backlog			= {
+	Backlog			= {			-- NOTICE: Do not enable the backlog for large servers, it WILL crash clients.
 		Size		= 100,		-- How many parts to render before calling task.wait(BacklogWait)
 		LoadDelay	= .1,		-- The amount of time to wait between backlog renders
 		Enabled		= false		-- Enable the backlog
@@ -86,7 +86,6 @@ for _, p in pairs(C.StreamingURLs.Primary) do
 	if IsInstanceActive(p) then table.insert(ActiveURLs, p) end
 end
 if #ActiveURLs == 0 then
-
 	-- Select a backup server
 	warn_("No primary servers available, searching for active backups ...")
 	for _, p in pairs(C.StreamingURLs.Backup) do
