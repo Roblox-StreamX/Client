@@ -26,12 +26,7 @@ local SerialMap = {
 	["Reflectance"] = "Number",
 	["Size"] = "Vector3",
 	["Transparency"] = "Number"
-}
-local SerialMapSpecs = {
-	["MeshPart"] = {
-		["MeshId"] = "String",
-		["TextureID"] = "String"
-	},
+},
 }
 
 function genSerialMap(m)

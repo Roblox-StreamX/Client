@@ -4,7 +4,7 @@
 	      _\ \/ __/ __/ -_) _ `/  ' \_>  <  
 	     /___/\__/_/  \__/\_,_/_/_/_/_/|_|  
 		
-		    StreamX Luau v3.0.2 (Hotfix 1)
+		    	StreamX Luau v3.0.3
 		    
 			 DarkPixlz 	| Payment Guru
 		     Crcoli737	|      Backend
@@ -168,7 +168,7 @@ if NeedsUpload then
 	log("Server requested upload, performing action!")
 	local sp, t0 = {}, time()
 	for _, p in pairs(Folder:GetDescendants()) do
-		if p:IsA("MeshPart") or p:IsA("Part") or p:IsA("BasePart") then
+		if p:IsA("Part") or p:IsA("BasePart") then
 			table.insert(sp, Serial.serialize(p))
 			if #sp == C.ChunkAmount then
 				UploadParts(sp)
@@ -181,11 +181,7 @@ if NeedsUpload then
 end
 
 -- Start deleting
-for _, c in pairs(Folder:GetDescendants()) do
-	-- TODO: check each part and check if it's in a player's streaming radius
-	-- TODO: if it is, don't destroy it (makes the whole system look faster)
-	c:Destroy()
-end
+Folder:ClearAllChildren()
 
 -- Backlog streamers
 local PlayerParts = {}
