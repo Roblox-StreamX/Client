@@ -32,9 +32,6 @@ local SerialMapSpecs = {
 		["MeshId"] = "String",
 		["TextureID"] = "String"
 	},
-	["UnionOperation"] = {
-		["AssetId"] = "String"
-	}
 }
 
 function genSerialMap(m)
