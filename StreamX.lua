@@ -211,7 +211,9 @@ local prv = {}
 while task.wait() do
 	for _, plr in pairs(game.Players:GetPlayers()) do
 		if PlayerParts[plr.UserId] == nil then PlayerParts[plr.UserId] = {} end
-		local head = plr.Character:WaitForChild("Head", .1)  -- DO NOT wait for one players head, just keep going
+		if plr.Character == nil then continue end	-- Prevent breaking from not having a character
+		local head = plr.Character:FindFirstChild("Head")
+		if head == nil then continue end  -- DO NOT wait for one players head, just keep going
 		if (not prv[plr.Name]) or (prv[plr.Name] ~= head.Position) then
 			prv[plr.Name] = head.Position
 			local data = DownloadParts({
