@@ -23,9 +23,9 @@ local SerialMap = {
 	["Material"] = "Material",
 	["MaterialVariant"] = "String",
 	["PivotOffset"] = "CFrame",
-	["Reflectance"] = "Number",
+	["Reflectance"] = "Float32",
 	["Size"] = "Vector3",
-	["Transparency"] = "Number"
+	["Transparency"] = "Float32"
 }
 
 function genSerialMap(m)
@@ -79,6 +79,8 @@ local Serial = {
 	deserializeBool = function(bb) return bb:ReadBool() end,
 	serializeNumber = function(bb, v) bb:WriteInt(16, v) end,
 	deserializeNumber = function(bb) return bb:ReadInt(16) end,
+	serializeFloat32 = function(bb, v) bb:WriteFloat32(v) end,
+	deserializeFloat32 = function(bb) return bb:ReadFloat32() end,
 	serializeString = function(bb, v) bb:WriteString(v) end,
 	deserializeString = function(bb) return bb:ReadString() end,
 	serializeCFrame = function(bb, v)
