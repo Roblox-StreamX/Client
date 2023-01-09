@@ -148,10 +148,6 @@ local function serialize(p)
 	for _, v in ipairs(SerialOrder) do
 		Serial["serialize" .. SerialMap[v]](bb, p[v])
 	end
-	for n, a in pairs(SerialMap) do
-		if p.ClassName ~= n then continue end
-		for _, v in ipairs(genSerialMap(a)) do Serial["serialize" .. a[v]](bb, p[v]) end
-	end
 	return Serial.serializeV3ForTransport(p.Position) .. ":" .. bb:ToBase64()
 end
 local function deserialize(p, f, rc, pts)
@@ -166,12 +162,6 @@ local function deserialize(p, f, rc, pts)
 				table.remove(pts, p)
 				return c
 			end
-		end
-	end
-	for n, a in pairs(SerialMap) do
-		if pt.ClassName ~= n then continue end
-		for _, v in ipairs(genSerialMap(a)) do
-			pt[v] = Serial["deserialize" .. a[v]](bb)
 		end
 	end
 	pt.Parent = f
