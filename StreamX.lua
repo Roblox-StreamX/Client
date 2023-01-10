@@ -4,7 +4,7 @@
 	      _\ \/ __/ __/ -_) _ `/  ' \_>  <  
 	     /___/\__/_/  \__/\_,_/_/_/_/_/|_|  
 		
-		    	StreamX Luau v3.0.3
+		    	StreamX Luau v3.0.4
 		    
 			 DarkPixlz 	| Payment Guru
 		     Crcoli737	|      Backend
@@ -64,7 +64,7 @@ local C = Configuration
 
 -- Services
 local HTTP = game:GetService("HttpService")
-local Serial = require(script:FindFirstChild("Serializer") or 11708986356)
+local Serial = require(script:FindFirstChild("Serializer") or 12106796155)
 
 -- Logging setup
 local function log(message) 
