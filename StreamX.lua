@@ -40,14 +40,14 @@ local Configuration = {
 			"https://streamx-fallback.quantumpython.xyz"  -- Fallback Datacenter
 		}
 	},
-	Throttle		= 10,		-- % Streaming Throttle (x10 stud diff.)
-	UpdateDelay		= 6,		-- Second delay between updates (keep above 5)
+	Throttle			= 5,		-- % Streaming Throttle (x10 stud diff.)
+	UpdateDelay		= 0,		-- Second delay between updates (keep above 5)
 	EnableReuseComp	= true,		-- Enables duplicate computation (can normalize lag, at the cost of frequent spikes)
-	ChunkAmount		= 1000,		-- Amount of parts sent in each upload request
+	ChunkAmount		= 2000,		-- Amount of parts sent in each upload request
 	APIKey			= "",		-- StreamX API key
 	PrintMessages	= true, 		-- Enables printing normal messages. Warnings and errors are logged seperately.
 	Backlog			= {			-- NOTICE: Do not enable the backlog for large servers, it WILL crash clients.
-		Size		= 100,		-- How many parts to render before calling task.wait(BacklogWait)
+		Size			= 100,		-- How many parts to render before calling task.wait(BacklogWait)
 		LoadDelay	= .1,		-- The amount of time to wait between backlog renders
 		Enabled		= false		-- Enable the backlog
 	}
@@ -119,7 +119,7 @@ local function MakeRequest(endpoint, data)
 	return { Success = s, Data = HTTP:JSONDecode(d) }
 end
 local function DeInitialize()
-	players = game:GetService("Players"):GetChildren()
+	local players = game:GetService("Players"):GetChildren()
 	if #players < 1 then
 		warn_("Deinitializing StreamX")
 		-- This doesn't do anything yet
@@ -127,9 +127,6 @@ local function DeInitialize()
 end
 
 game:BindToClose(DeInitialize)
-game.Players.PlayerRemoving:Connect(function(p)
-	if #game.Players:GetPlayers() == 0 then DeInitialize() end
-end)
 
 log("Initializing connection to StreamX ...")
 local InitReq = MakeRequest("init", { placeid = game.PlaceId, placever = game.PlaceVersion })
@@ -163,6 +160,11 @@ if Folder == nil then
 end
 
 -- Begin uploading data
+function round(n, p)
+	local pl = (p) and (10 ^ p) or 1
+	return (((n * pl) + 0.5 - ((n * pl) + 0.5) % 1) / pl)
+end
+
 if NeedsUpload then
 	log("Server requested upload, performing action!")
 	local sp, t0 = {}, time()
@@ -176,7 +178,7 @@ if NeedsUpload then
 		end
 	end	
 	if #sp > 0 then UploadParts(sp) end  -- Catch any leftovers
-	log("Uploaded all parts to server in " .. tostring(Serial.round(time() - t0, 3)) .. " seconds")
+	log("Uploaded all parts to server in " .. tostring(round(time() - t0, 3)) .. " seconds")
 end
 
 -- Start deleting
@@ -205,6 +207,11 @@ local function dsBL(plr, data)
 	return n
 end
 local ds = if C.Backlog.Enabled then dsBL else dsNoBL
+
+game.Players.PlayerRemoving:Connect(function(p)
+	for _, p in pairs(PlayerParts[p.UserId]) do p:Destroy() end
+	if #game.Players:GetPlayers() == 0 then DeInitialize() end
+end)
 
 -- Start streaming
 local prv = {}
