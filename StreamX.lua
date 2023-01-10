@@ -4,7 +4,7 @@
 	      _\ \/ __/ __/ -_) _ `/  ' \_>  <  
 	     /___/\__/_/  \__/\_,_/_/_/_/_/|_|  
 		
-		         StreamX Luau v3.0.2
+		         StreamX Luau v3.1
 		    
 			 DarkPixlz 	| Payment Guru
 		     Crcoli737	|      Backend
