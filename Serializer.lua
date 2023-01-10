@@ -34,46 +34,23 @@ function genSerialMap(m)
 	table.sort(so)
 	return so
 end
-function round(n, p)
-	local pl = (p) and (10 ^ p) or 1
-	return (((n * pl) + 0.5 - ((n * pl) + 0.5) % 1) / pl)
-end
-
-local Pi = 3.1415926535898
 local SerialOrder = genSerialMap(SerialMap)
 
+-- CFrames (gh/Dekkonot/bitbuffer)
+local CFVectorNormIDs = {
+	[0] = Vector3.new(1, 0, 0),		-- Enum.NormalId.Right
+	[1] = Vector3.new(0, 1, 0),		-- Enum.NormalId.Top
+	[2] = Vector3.new(0, 0, 1),		-- Enum.NormalId.Back
+	[3] = Vector3.new(-1, 0, 0),		-- Enum.NormalId.Left
+	[4] = Vector3.new(0, -1, 0),		-- Enum.NormalId.Bottom
+	[5] = Vector3.new(0, 0, -1)		-- Enum.NormalId.Front
+}
+local CFVectorOne = Vector3.new(1, 1, 1)
+
+-- Enum storage
+local EnumMat = Enum.Material:GetEnumItems()
+
 -- Serializers
-function serializeCFRot(bb, v)
-	local LookVector = v.LookVector
-	local Azumith = math.atan2(-LookVector.X, -LookVector.Z)
-	local Elevation = math.atan2(LookVector.Y, math.sqrt(LookVector.X * LookVector.X + LookVector.Z * LookVector.Z))
-	local WithoutRoll = CFrame.new(v.Position) * CFrame.Angles(0, Azumith, 0) * CFrame.Angles(Elevation, 0, 0)
-	local _, _, Roll = (WithoutRoll:Inverse() * v):ToEulerAnglesXYZ()
-
-	Azumith = math.floor(((Azumith / Pi) * 2097151) + 0.5)
-	Roll = math.floor(((Roll / Pi) * 1048575) + 0.5)
-	Elevation = math.floor(((Elevation / 1.5707963267949) * 1048575) + 0.5)
-
-	bb:WriteInt(22, Azumith)
-	bb:WriteInt(21, Roll)
-	bb:WriteInt(21, Elevation)
-end
-function deserializeCFRot(bb)
-	local Azumith = bb:ReadInt(22)
-	local Roll = bb:ReadInt(21)
-	local Elevation = bb:ReadInt(21)
-
-	Azumith = Pi * (Azumith / 2097151)
-	Roll = Pi * (Roll / 1048575)
-	Elevation = Pi * (Elevation / 1048575)
-
-	local Rotation = CFrame.Angles(0, Azumith, 0)
-	Rotation = Rotation * CFrame.Angles(Elevation, 0, 0)
-	Rotation = Rotation * CFrame.Angles(0, 0, Roll)
-
-	return Rotation
-end
-
 local Serial = {
 	serializeBool = function(bb, v) bb:WriteBool(v) end,
 	deserializeBool = function(bb) return bb:ReadBool() end,
@@ -85,28 +62,62 @@ local Serial = {
 	deserializeString = function(bb) return bb:ReadString() end,
 	serializeCFrame = function(bb, v)
 		-- https://github.com/Dekkonot/bitbuffer/blob/main/src/roblox.lua
-		-- Sure as hell not optimized, but my "optimized" implementation screwed up rotation
-		local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = v:GetComponents()
-		bb:WriteFloat64(x)
-		bb:WriteFloat64(y)
-		bb:WriteFloat64(z)
-		bb:WriteFloat64(r00)
-		bb:WriteFloat64(r01)
-		bb:WriteFloat64(r02)
-		bb:WriteFloat64(r10)
-		bb:WriteFloat64(r11)
-		bb:WriteFloat64(r12)
-		bb:WriteFloat64(r20)
-		bb:WriteFloat64(r21)
-		bb:WriteFloat64(r22)
+		local uv = v.UpVector
+		local rv = v.RightVector
+		local ra = math.abs(rv:Dot(CFVectorOne))
+		local upAligned = math.abs(uv:Dot(CFVectorOne))
+		local axisAligned = (math.abs(1 - ra) < 0.00001 or ra == 0)
+			and (math.abs(1 - upAligned) < 0.00001 or upAligned == 0)
+		if axisAligned then
+			local position = v.Position
+			local rn, un
+			for i = 0, 5 do
+				local a = CFVectorNormIDs[i]
+				if 1 - a:Dot(rv) < 0.00001 then rn = i end
+				if 1 - a:Dot(uv) < 0.00001 then un = i end
+			end
+			bb:WriteInt(8, rn * 6 + un)
+			bb:WriteFloat32(position.X)
+			bb:WriteFloat32(position.Y)
+			bb:WriteFloat32(position.Z)
+		else
+			bb:WriteInt(8, 0)
+			local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = v:GetComponents()
+			bb:WriteFloat32(x)
+			bb:WriteFloat32(y)
+			bb:WriteFloat32(z)
+			bb:WriteFloat32(r00)
+			bb:WriteFloat32(r01)
+			bb:WriteFloat32(r02)
+			bb:WriteFloat32(r10)
+			bb:WriteFloat32(r11)
+			bb:WriteFloat32(r12)
+			bb:WriteFloat32(r20)
+			bb:WriteFloat32(r21)
+			bb:WriteFloat32(r22)
+		end
 	end,
 	deserializeCFrame = function(bb)
-		return CFrame.new(
-			bb:ReadFloat64(), bb:ReadFloat64(), bb:ReadFloat64(),
-			bb:ReadFloat64(), bb:ReadFloat64(), bb:ReadFloat64(),
-			bb:ReadFloat64(), bb:ReadFloat64(), bb:ReadFloat64(),
-			bb:ReadFloat64(), bb:ReadFloat64(), bb:ReadFloat64()
-		)
+		-- https://github.com/Dekkonot/bitbuffer/blob/main/src/roblox.lua
+		local id = bb:ReadInt(8)
+		if id == 0 then
+			return CFrame.new(
+				bb:ReadFloat64(), bb:ReadFloat64(), bb:ReadFloat64(),
+				bb:ReadFloat64(), bb:ReadFloat64(), bb:ReadFloat64(),
+				bb:ReadFloat64(), bb:ReadFloat64(), bb:ReadFloat64(),
+				bb:ReadFloat64(), bb:ReadFloat64(), bb:ReadFloat64()
+			)
+		else
+			local rv = CFVectorNormIDs[math.floor(id / 6)]
+			local uv = CFVectorNormIDs[id % 6]
+			local lv = rv:Cross(uv)
+			return CFrame.new(
+				bb:ReadFloat32(), bb:ReadFloat32(), bb:ReadFloat32(),
+				rv.X, uv.X, lv.X,
+				rv.Y, uv.Y, lv.Y,
+				rv.Z, uv.Z, lv.Z
+			)
+		end
 	end,
 	serializeVector3 = function(bb, v)
 		bb:WriteFloat64(v.X)
@@ -121,25 +132,17 @@ local Serial = {
 		)
 	end,
 	serializeColor3 = function(bb, v)
-		bb:WriteFloat64(v.R)
-		bb:WriteFloat64(v.G)
-		bb:WriteFloat64(v.B)
+		bb:WriteUInt(8, 255 * v.R)
+		bb:WriteUInt(8, 255 * v.G)
+		bb:WriteUInt(8, 255 * v.B)
 	end,
 	deserializeColor3 = function(bb)
-		return Color3.fromRGB(
-			255 * bb:ReadFloat64(),
-			255 * bb:ReadFloat64(),
-			255 * bb:ReadFloat64()
-		)
+		return Color3.fromRGB(bb:ReadUInt(8), bb:ReadUInt(8), bb:ReadUInt(8))
 	end,
-	serializeMaterial = function(bb, v)
-		bb:WriteString(v.Name)
-	end,
-	deserializeMaterial = function(bb)
-		return Enum.Material[bb:ReadString()]
-	end,
+	serializeMaterial = function(bb, v) bb:WriteUInt(16, v.Value) end,
+	deserializeMaterial = function(bb) return bb:ReadUInt(16) end,
 	serializeV3ForTransport = function(p)
-		return tostring(round(p.X, 3)) .. ":" .. tostring(round(p.Y, 3)) .. ":" .. tostring(round(p.Z, 3))
+		return tostring(math.round(p.X)) .. ":" .. tostring(math.round(p.Y)) .. ":" .. tostring(math.round(p.Z))
 	end
 }
 
@@ -150,7 +153,10 @@ local function serialize(p)
 	for _, v in ipairs(SerialOrder) do
 		Serial["serialize" .. SerialMap[v]](bb, p[v])
 	end
-	return Serial.serializeV3ForTransport(p.Position) .. ":" .. bb:ToBase64()
+	local b64 = bb:ToBase64()
+	bb:ResetBuffer()
+	setmetatable(bb, nil)
+	return Serial.serializeV3ForTransport(p.Position) .. ":" .. b64
 end
 local function deserialize(p, f, rc, pts)
 	local bb = BitBuffer.FromBase64(p)
@@ -158,6 +164,8 @@ local function deserialize(p, f, rc, pts)
 	for _, v in ipairs(SerialOrder) do
 		pt[v] = Serial["deserialize" .. SerialMap[v]](bb)
 	end
+	bb:ResetBuffer()
+	setmetatable(bb, nil)
 	if rc then
 		for p, c in pairs(pts) do
 			if c.CFrame == pt.CFrame then
@@ -172,5 +180,4 @@ end
 
 Serial.serialize = serialize
 Serial.deserialize = deserialize
-Serial.round = round
 return Serial
