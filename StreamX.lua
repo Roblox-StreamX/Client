@@ -165,14 +165,7 @@ local function DeInitialize()
 	SWarn("Deinitializing StreamX")
 	MakeRequest("deinit", { authkey = AuthKey })
 end
-
 game:BindToClose(DeInitialize)
-game.Players.PlayerRemoving:Connect(function(p)
-	if #game.Players:GetPlayers() == 0 then
-		DeInitialize()
-		Debug("No players remain, deinitializing StreamX ...")
-	end
-end)
 
 -- Check update delay
 -- Do NOT delete this. The server will reject your request if it's less than 1 second.
@@ -259,6 +252,15 @@ local function dsBL(plr, data)
 end
 local ds = if C.Backlog.Enabled then dsBL else dsNoBL
 Debug(if C.Backlog.Enabled then "Set to deserialize WITH the backlog!" else "Set to deserialize WITHOUT a backlog!")
+
+-- Remove parts upon leaving + handle deinit
+game.Players.PlayerRemoving:Connect(function(p)
+	for _, p in pairs(PlayerParts[p.UserId]) do p:Destroy() end
+	if #game.Players:GetPlayers() == 0 then
+		DeInitialize()
+		Debug("No players remain, deinitializing StreamX ...")
+	end
+end)
 
 -- Start streaming
 local prv = {}
