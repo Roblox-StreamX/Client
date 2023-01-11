@@ -4,7 +4,7 @@
 	      _\ \/ __/ __/ -_) _ `/  ' \_>  <  
 	     /___/\__/_/  \__/\_,_/_/_/_/_/|_|  
 		
-		         StreamX Luau v3.1
+		         StreamX Luau v3.0.2
 		    
 			 DarkPixlz 	| Payment Guru
 		     Crcoli737	|      Backend
@@ -37,11 +37,11 @@ local Configuration = {
 			"https://streamx-fallback.quantumpython.xyz"  -- Fallback Datacenter
 		}
 	},
-	Throttle		= 10,		-- % Streaming Throttle (x10 stud diff.) Higher = Longer to stream.
+	Throttle		= 30,		-- % Streaming Throttle (x10 stud diff.)
 	UpdateDelay		= 5,		-- Second delay between updates (keep above 5)
 	EnableReuseComp	= true,		-- Enables duplicate computation (can normalize lag, at the cost of frequent spikes)
 	ChunkAmount		= 1000,		-- Amount of parts sent in each upload request
-	APIKey			= "API_KEY",		-- StreamX API key. Get this from the payment center.
+	APIKey			= "API_KEY",		-- StreamX API key
 	PrintMessages	= true, 		-- Enables printing normal messages. Warnings and errors are logged seperately.
 	DebugMode = false,              -- If you are getting support from us, enable this. Will print out EVERYTHING that StreamX is doing, and will increase memory substantially.
 	Backlog			= {
@@ -64,6 +64,14 @@ local C = Configuration
 local HTTP = game:GetService("HttpService")
 local Serial = require(script:FindFirstChild("Serializer") or 11708986356)
 local Auth
+
+-- Round
+function TRound(n, p)
+	local pl = (p) and (10 ^ p) or 1
+	return (((n * pl) + 0.5 - ((n * pl) + 0.5) % 1) / pl)
+end
+
+
 
 -- Logging setup
 local function log(message) 
@@ -243,7 +251,7 @@ if NeedsUpload then
 		end
 	end	
 	if #sp > 0 then UploadParts(sp) end  -- Catch any leftovers
-	log("Uploaded all parts to server in " .. tostring(Serial.round(time() - t0, 3)) .. " seconds")
+	log("Uploaded all parts to server in " .. tostring(Round(time() - t0, 3)) .. " seconds")
 end
 Debug("Uploading complete!")
 -- Start deleting
