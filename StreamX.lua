@@ -4,11 +4,12 @@
 	      _\ \/ __/ __/ -_) _ `/  ' \_>  <  
 	     /___/\__/_/  \__/\_,_/_/_/_/_/|_|  
 		
-		         StreamX Luau v3.0.2
+		         StreamX Luau v3.0.5
 		    
 			 DarkPixlz 	| Payment Guru
 		     Crcoli737	|      Backend
    			 iiPythonx	|      Backend
+
 	[ INSTRUCTIONS ]
 		1) Enable HTTP requests via Game Settings
 		2) Place all parts you wish to stream a folder named StreamX in the workspace
@@ -63,64 +64,45 @@ local C = Configuration
 -- Services
 local HTTP = game:GetService("HttpService")
 local Serial = require(script:FindFirstChild("Serializer") or 11708986356)
-local Auth
-
--- Round
-function TRound(n, p)
-	local pl = (p) and (10 ^ p) or 1
-	return (((n * pl) + 0.5 - ((n * pl) + 0.5) % 1) / pl)
-end
-
-
 
 -- Logging setup
-local function log(message) 
+local function Log(message) 
 	if C.PrintMessages then print("[StreamX]:", message) end
 end
-local function warn_(message) warn("[StreamX]:", message) end
-local function error_(message)
-	warn("Exiting StreamX due to error...")
-
-	error("[StreamX]: " .. message) 
+local function SWarn(message) warn("[StreamX]:", message) end
+local function SError(message)
+	SWarn("Exiting due to error ...")
+	error("\n[StreamX]: " .. message) 
 end
 local function Debug(message) 
-	if C.DebugMode then
-		print("[StreamX Debug]: "..message)
-	end
+	if C.DebugMode then print("[StreamX Debug]:", message) end
 end
 
 if C.DebugMode then
-	warn_("Debug mode is enabled! This is only recommended in Studio, as it prints most stuff out to the server output.")
+	SWarn("Debug mode is enabled! This is only recommended in Studio, as it prints most stuff out to the server output.")
 end
+
 -- Pick server URL
 local function IsInstanceActive(url)
-	Debug("Checking if URL "..url.." is active!")
-	local S, M = pcall(function() 
-		Debug("Pinging URL")
-		return HTTP:GetAsync(url, true) 
-	end)
+	Debug("Checking if URL '" .. url .. "' is active ...")
+	local S, M = pcall(function() return HTTP:GetAsync(url, true) end)
 	if S and M == "OK" then 
-		Debug("Connection to "..url.." succedded!")
+		Debug("Connection to '" .. url .. "' succeeded!")
 		return true 
 	end
-	Debug("Failed to connect to "..url.."!\nMessage: "..M)
+	Debug("Failed to connect to '" .. url .. "'!\nMessage: " .. M)
 	return false
 end
 
 -- Check HTTPService status
---if not game:GetService("HttpService").HttpEnabled then
---	error("[StreamX]: HTTPService is disabled! Please enable it before using StreamX.")
---end 
--- DOES NOT WORK
-local succ, err= pcall(function()
-	local requ = game:GetService("HttpService"):GetAsync("https://google.com")
-end)
-if not succ then
-	error("[StreamX]: HTTPService is disabled! Please enable it before using StreamX.")
-else
-	Debug("Successfully connected to HTTPService!")
+if not pcall(function()
+	HTTP:GetAsync("http://1.1.1.1")  -- Cloudflares IPs return almost immediately
+end) then
+	SError("HTTPService is disabled! Please enable it before using StreamX.")
 end
+Debug("Successfully connected to HTTPService!")
 
+-- Select URL
 local URL = nil
 local ActiveURLs = {}
 for _, p in pairs(C.StreamingURLs.Primary) do
@@ -129,19 +111,17 @@ end
 if #ActiveURLs == 0 then
 
 	-- Select a backup server
-	warn_("No primary servers available, searching for active backups ...")
+	SWarn("No primary servers available, searching for active backups ...")
 	for _, p in pairs(C.StreamingURLs.Backup) do
 		if IsInstanceActive(p) then URL = p; break end
 	end
+
 else URL = ActiveURLs[math.random(1, #ActiveURLs)] end
-
 if not URL then
-	Debug("ERROR: Could not find URL")
-	
-	return error_("No URLs are available at this time. This is probably something on our end - give us some time to fix it.")
+	return SError("No URLs are available at this time. This is probably something on our end - give us some time to fix it.")
 end
-log("Selected URL: " .. URL)
 
+Log("Selected URL: " .. URL)
 
 -- Initialization
 local function MakeRequest(endpoint, data)
@@ -156,38 +136,21 @@ local function MakeRequest(endpoint, data)
 	end)
 	if not s then
 		if d ~= "HTTP 401 (Unauthorized)" then
-			error_(d)
+			SError(d)
 		else
-			warn_("Your API key didn't work. This could be for many reasons, including:\n- You haven't renewed your subscription\n- The key you supplied is invalid\n- You haven't whitelisted this game ID in the payment center \n- The key was suspended for abuse.\nPlease resolve this before using StreamX, and if this is due to abuse please contact us.")
+			SWarn("Your API key didn't work. This could be for many reasons, including:\n- You haven't renewed your subscription\n- The key you supplied is invalid\n- You haven't whitelisted this game ID in the payment center \n- The key was suspended for abuse.\nPlease resolve this before using StreamX, and if this is due to abuse please contact us.")
 		end
 	end
 	return { Success = s, Data = HTTP:JSONDecode(d) }
 end
 
-local function DeInitialize()
-	warn_("Deinitializing StreamX")
-	Debug("Deinitializing server")
-	MakeRequest("deinitialize",{authkey = Auth})
-end
+Log("Initializing connection to StreamX ...")
+local InitReq = MakeRequest("init", { placeid = game.PlaceId, placever = game.PlaceVersion, guid = HTTP:GenerateGUID(false) })
 
-
-
-game:BindToClose(DeInitialize)
-game.Players.PlayerRemoving:Connect(function(p)
-	if #game.Players:GetPlayers() == 0 then
-		DeInitialize()
-		Debug("Deiniting because no players remain")
-	end
-end)
-
-log("Initializing connection to StreamX ...")
-local InitReq = MakeRequest("init", { placeid = game.PlaceId, placever = game.PlaceVersion, serverkeyguid = HTTP:GenerateGUID(false) })
-Debug("Made request! Awating response")
+Debug("Made request! Awating response ...")
 local AuthKey, NeedsUpload = InitReq.Data.key, InitReq.Data.upload
 
-Auth = AuthKey
-
-log("Authentication key is " .. AuthKey)
+Log("Authentication key is " .. AuthKey)
 
 local function UploadParts(parts)
 	Debug("Uploading...")
@@ -197,19 +160,33 @@ local function UploadParts(parts)
 	)
 end
 
+-- Handle deinitialization
+local function DeInitialize()
+	SWarn("Deinitializing StreamX")
+	MakeRequest("deinit", { authkey = AuthKey })
+end
+
+game:BindToClose(DeInitialize)
+game.Players.PlayerRemoving:Connect(function(p)
+	if #game.Players:GetPlayers() == 0 then
+		DeInitialize()
+		Debug("No players remain, deinitializing StreamX ...")
+	end
+end)
+
 -- Check update delay
-
 -- Do NOT delete this. The server will reject your request if it's less than 1 second.
-
-if math.round(C.UpdateDelay) <= 5 then
-	warn_(
+if C.UpdateDelay <= 5 then
+	SWarn(
 		"Your update delay is less than 5. If you have more active servers, or this game server is large, then it will lag. Please make it higher to prevent connection issues.")
 end
-if math.round(C.UpdateDelay) <= 1 then
+if C.UpdateDelay <= 1 then
 	C.UpdateDelay = 7
-	warn_("Sorry, but your update delay is too low. It has been turned to 7 to prevent connection issues. Changing this will result in requests being dropped by the server.") table.freeze(C)
+	SWarn("Sorry, but your update delay is too low. It has been turned to 7 to prevent connection issues. Changing this will result in requests being dropped by the server.")
+	table.freeze(C)
 end
 
+-- Initialize downloading
 local function DownloadParts(data)
 	return HTTP:PostAsync(
 		URL .. "/download",
@@ -221,64 +198,56 @@ local function DownloadParts(data)
 end
 
 local Folder = game.Workspace:FindFirstChild("StreamX")
-if Folder == nil then 
-	Folder = game.Workspace:FindFirstChild("ASSETS")
-	Debug("Could not find StreamX Folder")
-	if Folder then
-		warn_("WARNING: Please rename your ASSETS folder to \"StreamX\" to prevent future compatibility issues.")
-	end
+if Folder == nil then
+	return SError(
+		"No streaming directory found to stream from!\nPlease add a folder named \"StreamX\" into the Workspace and add items into this folder to stream.")
 end
-if Folder == nil then 
-	Debug("ERROR: No streaming directory found")
-	error_("No streaming directory found to stream from!\nPlease add a folder named \"StreamX\" into the Workspace and add items into this folder to stream.")
-	return
-end
-Debug("Folder found")
+Debug("Located folder 'StreamX' inside workspace.")
+
 -- Begin uploading data
+function round(n, p)
+	local pl = (p) and (10 ^ p) or 1
+	return (((n * pl) + 0.5 - ((n * pl) + 0.5) % 1) / pl)
+end
 if NeedsUpload then
-	log("Server requested upload, performing action!")
-	Debug("Uploading...")
+	Log("Server requested upload, performing action!")
+	Debug("Now uploading all parts ...")
 	local sp, t0 = {}, time()
 	for _, p in pairs(Folder:GetDescendants()) do
-		if p:IsA("MeshPart") or p:IsA("Part") or p:IsA("BasePart")  then
-			Debug("Uploading part... ("..p.Name..")")
+		if p:IsA("MeshPart") or p:IsA("Part") or p:IsA("BasePart") then
 			table.insert(sp, Serial.serialize(p))
 			if #sp == C.ChunkAmount then
 				UploadParts(sp)
-				Debug("Uploaded")
 				sp = {}
 			end
 		end
 	end	
 	if #sp > 0 then UploadParts(sp) end  -- Catch any leftovers
-	log("Uploaded all parts to server in " .. tostring(Round(time() - t0, 3)) .. " seconds")
+	Log("Uploaded all parts to server in " .. tostring(round(time() - t0, 3)) .. " seconds")
 end
-Debug("Uploading complete!")
+
+Debug("All parts uploaded successfully!")
+
 -- Start deleting
-Debug("Wiping folder...")
+Debug("Now erasing all items inside 'StreamX' ...")
 Folder:ClearAllChildren()
-Debug("Complete!")
+Debug("Folder erasing complete!")
+
 -- Backlog streamers
 local PlayerParts = {}
 local rc, bls, blw = C.EnableReuseComp, C.Backlog.Size, C.Backlog.LoadDelay
 local function dsNoBL(plr, data)
-	Debug("Deserializing without a backlog...")
 	local n = {}
 	local rcp = if rc then PlayerParts[plr.UserId] else {}
-	for _, p in pairs(string.split(data, ",")) do 
-		Debug("Deserializing part...")
-		table.insert(n, 
-			Serial.deserialize(p, Folder, rc, rcp)
-		)
+	for _, p in pairs(string.split(data, ",")) do
+		table.insert(n, Serial.deserialize(p, Folder, rc, rcp))
 	end
 	return n
 end
 local function dsBL(plr, data)
-	Debug("Deserializing with backlog enabled...")
 	local n, i = {}, 0
 	local rcp = if rc then PlayerParts[plr.UserId] else {}
 	for _, p in pairs(string.split(data, ",")) do
-		Debug("Deserializing parts...")
 		table.insert(n, Serial.deserialize(p, Folder, rc, rcp))
 		i += 1
 		if i == bls then
@@ -289,38 +258,37 @@ local function dsBL(plr, data)
 	return n
 end
 local ds = if C.Backlog.Enabled then dsBL else dsNoBL
+Debug(if C.Backlog.Enabled then "Set to deserialize WITH the backlog!" else "Set to deserialize WITHOUT a backlog!")
 
 -- Start streaming
 local prv = {}
 while task.wait() do
-	Debug("Streaming...")
+	Debug("Iterating through players ...")
 	for _, plr in pairs(game.Players:GetPlayers()) do
-		Debug("Checking "..plr.Name)
-		
+
+		-- Pre-checks
+		Debug("Analyzing", plr.Name)
 		if PlayerParts[plr.UserId] == nil then
 			PlayerParts[plr.UserId] = {}
-			Debug("Player not found, made table") 
+			Debug(plr.Name, "is new, parts table has been created.") 
 		end
-		
-		if plr.Character == nil then
-			Debug("Could not find character head, exiting") 
-			continue
-		end	-- Prevent breaking from not having a character
-		
+		if plr.Character == nil then  -- Prevent breaking from not having a character
+			Debug(plr.Name, "does not have a character, skipping for now."); continue
+		end
+
 		local head = plr.Character:FindFirstChild("Head")
-		
-		if head == nil then
-			Debug("Head was not found, exiting")
-			continue 
-		end  -- DO NOT wait for one players head, just keep going
-		
+		if head == nil then  -- DO NOT wait for one players head, just keep going
+			Debug(plr.Name, "does not have a head, skipping for now."); continue
+		end
+
+		-- Download data if player has moved
 		if (not prv[plr.Name]) or (prv[plr.Name] ~= head.Position) then
 			prv[plr.Name] = head.Position
 			local data = DownloadParts({
 				["HeadPosition"] = string.split(Serial.serializeV3ForTransport(head.Position), ":"),
 				["StudDifference"] = C.Throttle * 10
 			})
-			Debug("Downloaded parts!")
+			Debug("Parts downloaded for", plr.Name)
 			if data == "!" then
 				for _, p in pairs(PlayerParts[plr.UserId]) do p:Destroy() end
 				continue
@@ -328,10 +296,12 @@ while task.wait() do
 			local n = ds(plr, data)
 			for _, p in pairs(PlayerParts[plr.UserId]) do p:Destroy() end
 			PlayerParts[plr.UserId] = n
-			Debug("Complete for "..plr.Name)
+			Debug("Streaming complete for", plr.Name)
 		end
 	end
-	Debug("Checked all players, task complete!")
-	Debug("Waiting for update delay...")
+
+	-- Debug + wait until next iter
+	Debug("All players have been updated.")
+	Debug("Sleeping until UpdateDelay is over ...")
 	task.wait(C.UpdateDelay)
 end
