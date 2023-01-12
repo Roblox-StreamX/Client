@@ -269,18 +269,18 @@ while task.wait() do
 	for _, plr in pairs(game.Players:GetPlayers()) do
 
 		-- Pre-checks
-		Debug("Analyzing", plr.Name)
+		Debug("Analyzing " .. plr.Name)
 		if PlayerParts[plr.UserId] == nil then
 			PlayerParts[plr.UserId] = {}
-			Debug(plr.Name, "is new, parts table has been created.") 
+			Debug(plr.Name .. " is new, parts table has been created.") 
 		end
 		if plr.Character == nil then  -- Prevent breaking from not having a character
-			Debug(plr.Name, "does not have a character, skipping for now."); continue
+			Debug(plr.Name .. " does not have a character, skipping for now."); continue
 		end
 
 		local head = plr.Character:FindFirstChild("Head")
 		if head == nil then  -- DO NOT wait for one players head, just keep going
-			Debug(plr.Name, "does not have a head, skipping for now."); continue
+			Debug(plr.Name .. " does not have a head, skipping for now."); continue
 		end
 
 		-- Download data if player has moved
@@ -290,7 +290,7 @@ while task.wait() do
 				["HeadPosition"] = string.split(Serial.serializeV3ForTransport(head.Position), ":"),
 				["StudDifference"] = C.Throttle * 10
 			})
-			Debug("Parts downloaded for", plr.Name)
+			Debug("Parts downloaded for " .. plr.Name)
 			if data == "!" then
 				for _, p in pairs(PlayerParts[plr.UserId]) do p:Destroy() end
 				continue
@@ -298,7 +298,7 @@ while task.wait() do
 			local n = ds(plr, data)
 			for _, p in pairs(PlayerParts[plr.UserId]) do p:Destroy() end
 			PlayerParts[plr.UserId] = n
-			Debug("Streaming complete for", plr.Name)
+			Debug("Streaming complete for " .. plr.Name)
 		end
 	end
 
