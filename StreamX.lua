@@ -153,7 +153,6 @@ local AuthKey, NeedsUpload = InitReq.Data.key, InitReq.Data.upload
 Log("Authentication key is " .. AuthKey)
 
 local function UploadParts(parts)
-	Debug("Uploading...")
 	HTTP:PostAsync(
 		URL .. "/upload", table.concat(parts, ","), nil, false,
 		{ ["X-StreamX-Auth"] = AuthKey }
@@ -264,6 +263,7 @@ end)
 
 -- Start streaming
 local prv = {}
+local roundV3 = function(v) return Vector3.new(math.round(v.X), math.round(v.Y), math.round(v.Z)) end
 while task.wait() do
 	Debug("Iterating through players ...")
 	for _, plr in pairs(game.Players:GetPlayers()) do
@@ -284,7 +284,8 @@ while task.wait() do
 		end
 
 		-- Download data if player has moved
-		if (not prv[plr.Name]) or (prv[plr.Name] ~= head.Position) then
+		local pos = roundV3(head.Position)
+		if (not prv[plr.Name]) or ((prv[plr.Name] - head.Position).magnitude > 2) then
 			prv[plr.Name] = head.Position
 			local data = DownloadParts({
 				["HeadPosition"] = string.split(Serial.serializeV3ForTransport(head.Position), ":"),
