@@ -12,10 +12,10 @@
 
 	[ INSTRUCTIONS ]
 		1) Enable HTTP requests via Game Settings
-		2) Place all parts you wish to stream a folder named StreamX in the workspace
-			- You can also name this folder "ASSETS", but it is only for backwards compatibility and might be removed without notice.
+		2) Place all parts you wish to stream in a folder named 'StreamX' in the workspace
 		3) Change the options in the 'Configuration' table below.
 		4) That's it, you're done!
+
 	[ PROBLEMS? ]
 		o) Contact us via the StreamX topic on the devforum
 		o) Discord is also an option:
@@ -38,17 +38,17 @@ local Configuration = {
 			"https://streamx-fallback.quantumpython.xyz"  -- Fallback Datacenter
 		}
 	},
-	Throttle		= 30,		-- % Streaming Throttle (x10 stud diff.)
-	UpdateDelay		= 5,		-- Second delay between updates (keep above 5)
+	Throttle			= 30,		-- % Streaming Throttle (x10 stud diff.)
+	UpdateDelay		= 5,			-- Second delay between updates (keep above 5)
 	EnableReuseComp	= true,		-- Enables duplicate computation (can normalize lag, at the cost of frequent spikes)
 	ChunkAmount		= 1000,		-- Amount of parts sent in each upload request
-	APIKey			= "API_KEY",		-- StreamX API key
+	APIKey			= "",		-- StreamX API key
 	PrintMessages	= true, 		-- Enables printing normal messages. Warnings and errors are logged seperately.
-	DebugMode = false,              -- If you are getting support from us, enable this. Will print out EVERYTHING that StreamX is doing, and will increase memory substantially.
+	DebugMode		= true,		-- If you are getting support from us, enable this. Will print out EVERYTHING that StreamX is doing, and will increase memory substantially.
 	Backlog			= {
-		Size		= 100,		-- How many parts to render before calling task.wait(BacklogWait)
+		Size			= 100,		-- How many parts to render before calling task.wait(BacklogWait)
 		LoadDelay	= .1,		-- The amount of time to wait between backlog renders
-		Enabled		= true		-- Enable the backlog
+		Enabled		= false		-- Enable the backlog
 	}
 }
 
