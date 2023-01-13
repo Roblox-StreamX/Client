@@ -20,12 +20,20 @@ local SerialMap = {
 	["CFrame"] = "CFrame",
 	["Color"] = "Color3",
 	["Name"] = "String",
-	["Material"] = "Material",
+	["Material"] = "EnumValue",
 	["MaterialVariant"] = "String",
 	["PivotOffset"] = "CFrame",
 	["Reflectance"] = "Float32",
 	["Size"] = "Vector3",
-	["Transparency"] = "Float32"
+	["Transparency"] = "Float32",
+	
+	-- Surface types
+	["TopSurface"] = "EnumValue4",
+	["LeftSurface"] = "EnumValue4",
+	["RightSurface"] = "EnumValue4",
+	["BottomSurface"] = "EnumValue4",
+	["FrontSurface"] = "EnumValue4",
+	["BackSurface"] = "EnumValue4"
 }
 
 function genSerialMap(m)
@@ -46,9 +54,6 @@ local CFVectorNormIDs = {
 	[5] = Vector3.new(0, 0, -1)		-- Enum.NormalId.Front
 }
 local CFVectorOne = Vector3.new(1, 1, 1)
-
--- Enum storage
-local EnumMat = Enum.Material:GetEnumItems()
 
 -- Serializers
 local Serial = {
@@ -119,6 +124,10 @@ local Serial = {
 			)
 		end
 	end,
+	serializeEnumValue = function(bb, v) bb:WriteUInt(16, v.Value) end,
+	deserializeEnumValue = function(bb) return bb:ReadUInt(16) end,
+	serializeEnumValue4 = function(bb, v) bb:WriteUInt(4, v.Value) end,
+	deserializeEnumValue4 = function(bb) return bb:ReadUInt(4) end,
 	serializeVector3 = function(bb, v)
 		bb:WriteFloat64(v.X)
 		bb:WriteFloat64(v.Y)
@@ -139,8 +148,6 @@ local Serial = {
 	deserializeColor3 = function(bb)
 		return Color3.fromRGB(bb:ReadUInt(8), bb:ReadUInt(8), bb:ReadUInt(8))
 	end,
-	serializeMaterial = function(bb, v) bb:WriteUInt(16, v.Value) end,
-	deserializeMaterial = function(bb) return bb:ReadUInt(16) end,
 	serializeV3ForTransport = function(p)
 		return tostring(math.round(p.X)) .. ":" .. tostring(math.round(p.Y)) .. ":" .. tostring(math.round(p.Z))
 	end
