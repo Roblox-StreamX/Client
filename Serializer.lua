@@ -49,8 +49,8 @@ local CFVectorNormIDs = {
 	[0] = Vector3.new(1, 0, 0),		-- Enum.NormalId.Right
 	[1] = Vector3.new(0, 1, 0),		-- Enum.NormalId.Top
 	[2] = Vector3.new(0, 0, 1),		-- Enum.NormalId.Back
-	[3] = Vector3.new(-1, 0, 0),		-- Enum.NormalId.Left
-	[4] = Vector3.new(0, -1, 0),		-- Enum.NormalId.Bottom
+	[3] = Vector3.new(-1, 0, 0),	-- Enum.NormalId.Left
+	[4] = Vector3.new(0, -1, 0),	-- Enum.NormalId.Bottom
 	[5] = Vector3.new(0, 0, -1)		-- Enum.NormalId.Front
 }
 local CFVectorOne = Vector3.new(1, 1, 1)
@@ -67,25 +67,7 @@ local Serial = {
 	deserializeString = function(bb) return bb:ReadString() end,
 	serializeCFrame = function(bb, v)
 		-- https://github.com/Dekkonot/bitbuffer/blob/main/src/roblox.lua
-		local uv = v.UpVector
-		local rv = v.RightVector
-		local ra = math.abs(rv:Dot(CFVectorOne))
-		local upAligned = math.abs(uv:Dot(CFVectorOne))
-		local axisAligned = (math.abs(1 - ra) < 0.00001 or ra == 0)
-			and (math.abs(1 - upAligned) < 0.00001 or upAligned == 0)
-		if axisAligned then
-			local position = v.Position
-			local rn, un
-			for i = 0, 5 do
-				local a = CFVectorNormIDs[i]
-				if 1 - a:Dot(rv) < 0.00001 then rn = i end
-				if 1 - a:Dot(uv) < 0.00001 then un = i end
-			end
-			bb:WriteInt(8, rn * 6 + un)
-			bb:WriteFloat32(position.X)
-			bb:WriteFloat32(position.Y)
-			bb:WriteFloat32(position.Z)
-		else
+		local function writeAll()
 			bb:WriteInt(8, 0)
 			local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = v:GetComponents()
 			bb:WriteFloat32(x)
@@ -100,6 +82,30 @@ local Serial = {
 			bb:WriteFloat32(r20)
 			bb:WriteFloat32(r21)
 			bb:WriteFloat32(r22)
+		end
+		local uv = v.UpVector
+		local rv = v.RightVector
+		local ra = math.abs(rv:Dot(CFVectorOne))
+		local upAligned = math.abs(uv:Dot(CFVectorOne))
+		local axisAligned = (math.abs(1 - ra) < 0.00001 or ra == 0)
+			and (math.abs(1 - upAligned) < 0.00001 or upAligned == 0)
+		if axisAligned then
+			local position = v.Position
+			local rn, un
+			for i = 0, 5 do
+				local a = CFVectorNormIDs[i]
+				if 1 - a:Dot(rv) < 0.00001 then rn = i end
+				if 1 - a:Dot(uv) < 0.00001 then un = i end
+			end
+			local s = pcall(function()
+				bb:WriteInt(8, (rn) * 6 + un)
+				bb:WriteFloat32(position.X)
+				bb:WriteFloat32(position.Y)
+				bb:WriteFloat32(position.Z)				
+			end)
+			if not s then writeAll() end
+		else
+			writeAll()
 		end
 	end,
 	deserializeCFrame = function(bb)
