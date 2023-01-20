@@ -20,7 +20,7 @@ local SerialMap = {
 	["CFrame"] = "CFrame",
 	["Color"] = "Color3",
 	["Name"] = "String",
-	["Material"] = "EnumValue",
+	["Material"] = "Material",
 	["MaterialVariant"] = "String",
 	["PivotOffset"] = "CFrame",
 	["Reflectance"] = "Float32",
@@ -54,6 +54,57 @@ local CFVectorNormIDs = {
 	[5] = Vector3.new(0, 0, -1)		-- Enum.NormalId.Front
 }
 local CFVectorOne = Vector3.new(1, 1, 1)
+
+-- Materials (since ROBLOX can't make anything that works properly)
+-- Hardcoded for performance
+MaterialIDsA = {
+	[256] = 1,
+	[272] = 2,
+	[288] = 3,
+	[512] = 4,
+	[528] = 5,
+	[784] = 6,
+	[800] = 7,
+	[816] = 8,
+	[832] = 9,
+	[848] = 10,
+	[864] = 11,
+	[880] = 12,
+	[1040] = 13,
+	[1056] = 14,
+	[1072] = 15,
+	[1088] = 16,
+	[1280] = 17,
+	[1296] = 18,
+	[1312] = 19,
+	[1536] = 20,
+	[1568] = 21,
+	[1584] = 22
+}
+MaterialIDsB = {
+	[1] = 256,
+	[2] = 272,
+	[3] = 288,
+	[4] = 512,
+	[5] = 528,
+	[6] = 784,
+	[7] = 800,
+	[8] = 816,
+	[9] = 832,
+	[10] = 848,
+	[11] = 864,
+	[12] = 880,
+	[13] = 1040,
+	[14] = 1056,
+	[15] = 1072,
+	[16] = 1088,
+	[17] = 1280,
+	[18] = 1296,
+	[19] = 1312,
+	[20] = 1536,
+	[21] = 1568,
+	[22] = 1584
+}
 
 -- Serializers
 local Serial = {
@@ -130,8 +181,12 @@ local Serial = {
 			)
 		end
 	end,
-	serializeEnumValue = function(bb, v) bb:WriteUInt(16, v.Value) end,
-	deserializeEnumValue = function(bb) return bb:ReadUInt(16) end,
+	serializeMaterial = function(bb, v)
+		bb:WriteUInt(4, MaterialIDsA[v.Value])
+	end,
+	deserializeMaterial = function(bb)
+		return MaterialIDsB[bb:ReadUInt(4)]	
+	end,
 	serializeEnumValue4 = function(bb, v) bb:WriteUInt(4, v.Value) end,
 	deserializeEnumValue4 = function(bb) return bb:ReadUInt(4) end,
 	serializeVector3 = function(bb, v)
