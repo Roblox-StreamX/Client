@@ -4,7 +4,7 @@
 	      _\ \/ __/ __/ -_) _ `/  ' \_>  <  
 	     /___/\__/_/  \__/\_,_/_/_/_/_/|_|  
 		
-		         StreamX Luau v3.0.5
+		         StreamX Luau v3.0.6
 		    
 			 DarkPixlz 	| Payment Guru
 		     Crcoli737	|      Backend
@@ -12,7 +12,8 @@
 
 	[ INSTRUCTIONS ]
 		1) Enable HTTP requests via Game Settings
-		2) Place all parts you wish to stream in a folder named 'StreamX' in the workspace
+		2) Place all parts you wish to stream a folder named StreamX in the workspace
+			- You can also name this folder "ASSETS", but it is only for backwards compatibility and might be removed without notice.
 		3) Change the options in the 'Configuration' table below.
 		4) That's it, you're done!
 
@@ -38,17 +39,17 @@ local Configuration = {
 			"https://streamx-fallback.quantumpython.xyz"  -- Fallback Datacenter
 		}
 	},
-	Throttle			= 30,		-- % Streaming Throttle (x10 stud diff.)
-	UpdateDelay		= 5,			-- Second delay between updates (keep above 5)
-	EnableReuseComp	= true,		-- Enables duplicate computation (can normalize lag, at the cost of frequent spikes)
+	Throttle		= 15,		-- % Streaming Throttle (x10 stud diff.)
+	UpdateDelay		= 1,		-- Second delay between updates (keep above 5)
+	EnableReuseComp	= true,		-- Enables duplicate computation (can normalize lag, at the cost of heavier spikes)
 	ChunkAmount		= 1000,		-- Amount of parts sent in each upload request
 	APIKey			= "",		-- StreamX API key
-	PrintMessages	= true, 		-- Enables printing normal messages. Warnings and errors are logged seperately.
+	PrintMessages	= true, 	-- Enables printing normal messages. Warnings and errors are logged seperately.
 	DebugMode		= true,		-- If you are getting support from us, enable this. Will print out EVERYTHING that StreamX is doing, and will increase memory substantially.
 	Backlog			= {
-		Size			= 100,		-- How many parts to render before calling task.wait(BacklogWait)
+		Size		= 500,		-- How many parts to render before calling task.wait(BacklogWait)
 		LoadDelay	= .1,		-- The amount of time to wait between backlog renders
-		Enabled		= false		-- Enable the backlog
+		Enabled		= true		-- Enable the backlog
 	}
 }
 
@@ -85,7 +86,7 @@ end
 -- Pick server URL
 local function IsInstanceActive(url)
 	Debug("Checking if URL '" .. url .. "' is active ...")
-	local S, M = pcall(function() return HTTP:GetAsync(url, true) end)
+	local S, M = pcall(function() return HTTP:PostAsync(url, true) end)
 	if S and M == "OK" then 
 		Debug("Connection to '" .. url .. "' succeeded!")
 		return true 
@@ -96,8 +97,8 @@ end
 
 -- Check HTTPService status
 if not pcall(function()
-	HTTP:GetAsync("http://1.1.1.1")  -- Cloudflares IPs return almost immediately
-end) then
+		HTTP:GetAsync("http://1.1.1.1")  -- Cloudflares IPs return almost immediately
+	end) then
 	SError("HTTPService is disabled! Please enable it before using StreamX.")
 end
 Debug("Successfully connected to HTTPService!")
@@ -131,7 +132,11 @@ local function MakeRequest(endpoint, data)
 			HTTP:JSONEncode(data),
 			Enum.HttpContentType.ApplicationJson,
 			false,
-			{ ["X-StreamX-Key"] = C.APIKey }
+			{
+				["X-StreamX-Key"] = C.APIKey,
+				["X-StreamX-PlaceID"] = tostring(game.PlaceId),
+				["X-StreamX-PlaceVer"] = tostring(game.PlaceVersion)
+			}
 		)
 	end)
 	if not s then
@@ -145,7 +150,7 @@ local function MakeRequest(endpoint, data)
 end
 
 Log("Initializing connection to StreamX ...")
-local InitReq = MakeRequest("init", { placeid = game.PlaceId, placever = game.PlaceVersion, guid = HTTP:GenerateGUID(false) })
+local InitReq = MakeRequest("init")
 
 Debug("Made request! Awating response ...")
 local AuthKey, NeedsUpload = InitReq.Data.key, InitReq.Data.upload
@@ -162,21 +167,8 @@ end
 -- Handle deinitialization
 local function DeInitialize()
 	SWarn("Deinitializing StreamX")
-	MakeRequest("deinit", { authkey = AuthKey })
 end
 game:BindToClose(DeInitialize)
-
--- Check update delay
--- Do NOT delete this. The server will reject your request if it's less than 1 second.
-if C.UpdateDelay <= 5 then
-	SWarn(
-		"Your update delay is less than 5. If you have more active servers, or this game server is large, then it will lag. Please make it higher to prevent connection issues.")
-end
-if C.UpdateDelay <= 1 then
-	C.UpdateDelay = 7
-	SWarn("Sorry, but your update delay is too low. It has been turned to 7 to prevent connection issues. Changing this will result in requests being dropped by the server.")
-	table.freeze(C)
-end
 
 -- Initialize downloading
 local function DownloadParts(data)
@@ -192,7 +184,7 @@ end
 local Folder = game.Workspace:FindFirstChild("StreamX")
 if Folder == nil then
 	return SError(
-		"No streaming directory found to stream from!\nPlease add a folder named \"StreamX\" into the Workspace and add items into this folder to stream.")
+		"No streaming folder found to stream from!\nPlease add a folder named \"StreamX\" into the Workspace and add items into this folder to stream.")
 end
 Debug("Located folder 'StreamX' inside workspace.")
 
@@ -269,7 +261,7 @@ while task.wait() do
 	for _, plr in pairs(game.Players:GetPlayers()) do
 
 		-- Pre-checks
-		Debug("Analyzing " .. plr.Name)
+		Debug("Analyzing", plr.Name)
 		if PlayerParts[plr.UserId] == nil then
 			PlayerParts[plr.UserId] = {}
 			Debug(plr.Name .. " is new, parts table has been created.") 
@@ -286,7 +278,7 @@ while task.wait() do
 		-- Download data if player has moved
 		local pos = roundV3(head.Position)
 		if (not prv[plr.Name]) or ((prv[plr.Name] - head.Position).magnitude > 2) then
-			prv[plr.Name] = head.Position
+			prv[plr.Name] = pos
 			local data = DownloadParts({
 				["HeadPosition"] = string.split(Serial.serializeV3ForTransport(head.Position), ":"),
 				["StudDifference"] = C.Throttle * 10
