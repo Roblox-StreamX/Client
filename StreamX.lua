@@ -11,20 +11,18 @@
    			 iiPythonx	|      Backend
 
 	[ INSTRUCTIONS ]
-		1) Enable HTTP requests via Game Settings
-		2) Place all parts you wish to stream a folder named StreamX in the workspace
-			- You can also name this folder "ASSETS", but it is only for backwards compatibility and might be removed without notice.
-		3) Change the options in the 'Configuration' table below.
-		4) That's it, you're done!
+		1) Find an open StreamX server or setup one yourself
+		2) Enable HTTP requests via Game Settings
+		3) Place all parts you wish to stream a folder named StreamX in the workspace
+		4) Change the options in the 'Configuration' table below.
+		5) That's it, you're done!
 
 	[ PROBLEMS? ]
-		o) Contact us via the StreamX topic on the devforum
-		o) Discord is also an option:
-			- Contact DarkPixlz @ Pixlz#1337		(fastest)
-			- Contact iiPythonx @ iiPython#0768
+		o) The StreamX team generally does not offer support anymore.
+		o) If you see an issue and have the knowledge to fix it, feel free to open a pull request on the GitHub.
 			
 	[ CONTRIBUTE ]
-		o) Please note that this StreamX client is open-source and available
+		o) The StreamX client and server code is open sourced,
 		o) at https://github.com/Roblox-StreamX/Client
 		o) Contributions are welcome.
 ]]
@@ -33,21 +31,21 @@
 local Configuration = {
 	StreamingURLs = {
 		["Primary"] = {
-			"https://streamx.quantumpython.xyz"		      -- High Availability Datacenter
+			-- Insert the URL of your streaming server(s)
 		},
 		["Backup"] = {
-			"https://streamx-fallback.quantumpython.xyz"  -- Fallback Datacenter
+			-- Insert the URL of a backup streaming server which will be called on if any of the primaries fail.
 		}
 	},
 	Throttle		= 15,		-- % Streaming Throttle (x10 stud diff.)
-	UpdateDelay		= 1,		-- Second delay between updates (keep above 5)
+	UpdateDelay		= 10,		-- Second delay between updates (keep above 5). The larger the Throttle is, the higher this should be.
 	EnableReuseComp	= true,		-- Enables duplicate computation (can normalize lag, at the cost of heavier spikes)
 	ChunkAmount		= 1000,		-- Amount of parts sent in each upload request
-	APIKey			= "",		-- StreamX API key
-	PrintMessages	= true, 	-- Enables printing normal messages. Warnings and errors are logged seperately.
-	DebugMode		= true,		-- If you are getting support from us, enable this. Will print out EVERYTHING that StreamX is doing, and will increase memory substantially.
+	APIKey			= "",		-- StreamX API key, if required by your server.
+	PrintMessages	= true, 	-- Enables printing of potentially useful information for debugging. Warnings and errors are logged seperately.
+	DebugMode		= true,		-- If you are getting support from us, enable this. Will print out EVERYTHING that StreamX is doing, and will increase memory substantially, so you shouldn't use it normally.
 	Backlog			= {
-		Size		= 500,		-- How many parts to render before calling task.wait(BacklogWait)
+		Size		= 500,		-- How many parts to render before waiting to continue
 		LoadDelay	= .1,		-- The amount of time to wait between backlog renders
 		Enabled		= true		-- Enable the backlog
 	}
@@ -55,7 +53,7 @@ local Configuration = {
 
 --[[
 	StreamX Internal Code
-	Please don't edit this unless you KNOW what you're doing.
+	Please don't edit this unless you know what you're doing.
 	
 	If you experience issues and have modified this section, we can't help.
 ]]
@@ -67,37 +65,26 @@ local HTTP = game:GetService("HttpService")
 local Serial = require(script:FindFirstChild("Serializer") or 11708986356)
 
 -- Logging setup
-local function Log(message) 
-	if C.PrintMessages then print("[StreamX]:", message) end
-end
+local function Log(message) if C.PrintMessages then print("[StreamX]:", message) end end
 local function SWarn(message) warn("[StreamX]:", message) end
-local function SError(message)
-	SWarn("Exiting due to error ...")
-	error("\n[StreamX]: " .. message) 
-end
-local function Debug(message) 
-	if C.DebugMode then print("[StreamX Debug]:", message) end
-end
-
-if C.DebugMode then
-	SWarn("Debug mode is enabled! This is only recommended in Studio, as it prints most stuff out to the server output.")
-end
+local function SError(message) error("\n[StreamX]: " .. message) end
+local function Debug(message)  if C.DebugMode then print("[StreamX Debug]:", message) end end
 
 -- Pick server URL
 local function IsInstanceActive(url)
-	Debug("Checking if URL '" .. url .. "' is active ...")
+	Debug(`Checking if URL {url} is active ...`)
 	local S, M = pcall(function() return HTTP:PostAsync(url, true) end)
 	if S and M == "OK" then 
-		Debug("Connection to '" .. url .. "' succeeded!")
+		Debug(`Connected to {url}!`)
 		return true 
 	end
-	Debug("Failed to connect to '" .. url .. "'!\nMessage: " .. M)
+	Debug(`Faailed connecting to {url} for {M}`)
 	return false
 end
 
 -- Check HTTPService status
 if not pcall(function()
-		HTTP:GetAsync("http://1.1.1.1")  -- Cloudflares IPs return almost immediately
+		HTTP:GetAsync("http://1.1.1.1")
 	end) then
 	SError("HTTPService is disabled! Please enable it before using StreamX.")
 end
@@ -110,7 +97,6 @@ for _, p in pairs(C.StreamingURLs.Primary) do
 	if IsInstanceActive(p) then table.insert(ActiveURLs, p) end
 end
 if #ActiveURLs == 0 then
-
 	-- Select a backup server
 	SWarn("No primary servers available, searching for active backups ...")
 	for _, p in pairs(C.StreamingURLs.Backup) do
@@ -119,7 +105,7 @@ if #ActiveURLs == 0 then
 
 else URL = ActiveURLs[math.random(1, #ActiveURLs)] end
 if not URL then
-	return SError("No URLs are available at this time. This is probably something on our end - give us some time to fix it.")
+	return SError("No URLs are available for streaming at this time. Make sure you added valid StreamX servers to the Configuration.")
 end
 
 Log("Selected URL: " .. URL)
@@ -143,7 +129,7 @@ local function MakeRequest(endpoint, data)
 		if d ~= "HTTP 401 (Unauthorized)" then
 			SError(d)
 		else
-			SWarn("Your API key didn't work. This could be for many reasons, including:\n- You haven't renewed your subscription\n- The key you supplied is invalid\n- You haven't whitelisted this game ID in the payment center \n- The key was suspended for abuse.\nPlease resolve this before using StreamX, and if this is due to abuse please contact us.")
+			SWarn("Your API key didn't work. This is likely something on the server's end. Check you entered the API key correctly, then contact the server owner.")
 		end
 	end
 	return { Success = s, Data = HTTP:JSONDecode(d) }
@@ -184,7 +170,7 @@ end
 local Folder = game.Workspace:FindFirstChild("StreamX")
 if Folder == nil then
 	return SError(
-		"No streaming folder found to stream from!\nPlease add a folder named \"StreamX\" into the Workspace and add items into this folder to stream.")
+		"No streaming folder found to stream from!\nPlease add a folder named \"StreamX\" into the Workspace and add anything you would like streamed.")
 end
 Debug("Located folder 'StreamX' inside workspace.")
 
@@ -193,8 +179,8 @@ function round(n, p)
 	local pl = (p) and (10 ^ p) or 1
 	return (((n * pl) + 0.5 - ((n * pl) + 0.5) % 1) / pl)
 end
+
 if NeedsUpload then
-	Log("Server requested upload, performing action!")
 	Debug("Now uploading all parts ...")
 	local sp, t0 = {}, time()
 	for _, p in pairs(Folder:GetDescendants()) do
@@ -242,7 +228,8 @@ local function dsBL(plr, data)
 	return n
 end
 local ds = if C.Backlog.Enabled then dsBL else dsNoBL
-Debug(if C.Backlog.Enabled then "Set to deserialize WITH the backlog!" else "Set to deserialize WITHOUT a backlog!")
+
+Debug(`Set to deserialize {C.Backlog.Enabled and "using" or "without"} the backlog!`)
 
 -- Remove parts upon leaving + handle deinit
 game.Players.PlayerRemoving:Connect(function(p)
