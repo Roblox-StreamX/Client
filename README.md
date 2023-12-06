@@ -6,10 +6,9 @@ If you want a stable release, copy `StreamX.lua` to `ServerScriptStorage` and fi
 
 ### Contributions
 
-While the backend is proprietary, this client is very much open-source and open for contributions.  
-Know how to optimize it further? Open an issue or pull request and we'll see if it can work.  
+This client is very much open-source and open for contributions.  
+Know how to optimize it further? Open an issue or pull request and we'll see if it can work.
 
-If you find any possible security issues, please excercise ethical security disclosure and contact us:
-- [iiPython (ben@iipython.cf)](mailto:ben@iipython.cf)
-- [Crcoli737 (crcoli737@quantumpython.xyz)](mailto:crcoli737@quantumpython.xyz)
-- [DarkPixlz (other@darkpixlz.com)](mailto:other@darkpixlz.com)
+If you would like to see how the backend works or edit it, please check out our other repos.
+
+https://github.com/Roblox-StreamX
